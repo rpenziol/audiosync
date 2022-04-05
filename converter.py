@@ -17,7 +17,7 @@ class Converter(object):
         self._options = options
         self._ffmpeg_args = self.ffmpeg_arg_generator()
 
-    def queue_job(self, input_file, output_file):
+    def queue_job(self, input_file: Path, output_file: Path):
         file = {
             'input_file': input_file,
             'output_file': output_file,
@@ -31,10 +31,10 @@ class Converter(object):
         for file in self._files:
             fqfn_input = file['input_file']
             fqfn_output = file['output_file']
-            input_extension = Path(fqfn_input).suffix
+            input_extension = fqfn_input.suffix
             fqfn_input_md5 = 0
-            fqfn_input_mtime = Path(fqfn_input).stat().st_mtime
-            fqfn_input_size = Path(fqfn_input).stat().st_size
+            fqfn_input_mtime = fqfn_input.stat().st_mtime
+            fqfn_input_size = fqfn_input.stat().st_size
             match = False
             output_exists = False
 
@@ -48,11 +48,8 @@ class Converter(object):
                 fqfn_input_md5 = hashlib.md5(open(fqfn_input, 'rb').read()).hexdigest()
                 if self._db.get_hash(fqfn_input) == fqfn_input_md5:
                     match = True
-            else:
-                log.fatal('No match method set.')
-                exit(1)
 
-            if Path(fqfn_output).is_file():
+            if fqfn_output.is_file():
                 output_exists = True
                 if Path(fqfn_output).stat().st_size == 0:
                     match = False
@@ -66,7 +63,7 @@ class Converter(object):
 
             if not match and output_exists:
                 log.debug('Output file "{0}" has changed. Deleting and reprocessing.'.format(fqfn_output))
-                Path(fqfn_output).unlink()
+                fqfn_output.unlink()
                 self._db.update(fqfn_input, fqfn_input_md5, fqfn_input_mtime, fqfn_input_size)
 
             if not match and not output_exists:
@@ -151,8 +148,8 @@ allowed one input variable.'''
 
 
 def convert(job):
-    fqfn_input = job['input_file']
-    fqfn_output = job['output_file']
+    fqfn_input = str(job['input_file'])
+    fqfn_output = str(job['output_file'])
     ffmpeg_path = job['ffmpeg_path']
     custom_command = job['custom_command']
     ffmpeg_args = job['ffmpeg_args']

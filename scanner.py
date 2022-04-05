@@ -17,81 +17,63 @@ class Scanner(object):
     ''' Recursively scans input directory structure and compares to the destination folder tree.
     Creates missing directories in destination folder, calls dir_scanner to queue conversions, then processes queue '''
     def tree_scanner(self, source_dir: Path, dest_dir: Path):
-        for path in source_dir.rglob('*'):
-            rel_path = path.relative_to(source_dir)
-            output_path = Path(dest_dir, rel_path)
 
-            if path.is_dir() and not output_path.exists():
-                log.info('Directory "{0}" does not exist. Creating directory'.format(output_path))
-                output_path.mkdir(parents=True)
-            elif path.is_dir():
-                log.debug('Directory "{0}" already exist. Skipping directory creation.'.format(output_path))
+        def _remove_orphans(source_dir: Path, dest_dir: Path):
+            for path in dest_dir.rglob('*'):
+                rel_path = path.relative_to(dest_dir)
+                source_path = Path(source_dir, rel_path)
 
-            if path.is_dir():
-                self.dir_scanner(path, output_path)
+                if path.is_dir() and not source_path.exists():
+                    log.debug(f'"{path}" is an orphaned directory. Removing.')
+                    shutil.rmtree(path)
+
+                if path.is_file():
+                    source_file_found = False
+                    source_file_dir = source_path.parent
+                    dest_filename_without_extension = rel_path.stem
+
+                    for source_file in source_file_dir.glob(f'{dest_filename_without_extension}*'):
+                        source_file_extension = source_file.suffix.lstrip('.').lower()
+
+                        if source_file_extension in self._options['extensions_to_convert']:
+                            log.debug(f'Source file found "{source_file}".')
+                            source_file_found = True
+                            break
+
+                    if not source_file_found:
+                        log.debug(f'"{path}" is an orphaned file. Removing.')
+                        path.unlink()
+
+        def _sync_to_dest(source_dir: Path, dest_dir: Path):
+            for path in source_dir.rglob('*'):
+                rel_path = path.relative_to(source_dir)
+                output_path = Path(dest_dir, rel_path)
+
+                if path.is_dir() and not output_path.exists():
+                    log.info('Directory "{0}" does not exist. Creating directory'.format(output_path))
+                    output_path.mkdir(parents=True)
+                elif path.is_dir():
+                    log.debug('Directory "{0}" already exist. Skipping directory creation.'.format(output_path))
+                else:
+                    self.queue_file(source_dir, dest_dir, path)
+
+        _remove_orphans(source_dir, dest_dir)
+        _sync_to_dest(source_dir, dest_dir)
         # Make the magic happen
         self._converter.process_queue()
 
-    ''' Compares files between input and output paths.
-    Depending on file type, copy or convert file from input_path to output_path '''
-    def dir_scanner(self, input_path, output_path):
-        # Remove orphaned files and folder trees from output_path
-        self.remove_orphan_dirs(input_path, output_path)
-        self.remove_orphan_files(input_path, output_path)
-
-        for item in input_path.iterdir():
-            self.queue_file(input_path, output_path, item)
-
-    ''' Remove folder trees from output_path if folder isn't in input_path'''
-    @staticmethod
-    def remove_orphan_dirs(input_path, output_path):
-        for item in output_path.iterdir():
-            if Path(output_path, item).is_dir() and not Path(input_path, item).exists():
-                log.debug('"{0}" is an orphaned directory. Removing from "{1}".'.format(item, output_path))
-                shutil.rmtree(Path(output_path, item))
-
-    ''' Remove files from output_path if file isn't in input_path'''
-    @staticmethod
-    def remove_orphan_files(input_path, output_path):
-        input_files = []
-
-        # Collect list of file names from input_path
-        for item in input_path.iterdir():
-            if Path(input_path, item).is_file():
-                base_name = Path(item).stem
-                input_files.append(base_name)
-
-        # Remove orphaned files from output_path
-        for item in output_path.iterdir():
-            if Path(output_path, item).is_file():
-                base_name = Path(item).stem
-                if base_name not in input_files:
-                    log.debug('"{0}" is an orphaned file. Removing from "{1}".'.format(item, output_path))
-                    Path(output_path, item).unlink()
 
     ''' Add file to process queue if it meets conversion criteria '''
-    def queue_file(self, input_path, output_path, item):
-        if not Path(input_path, item).is_file():
-            log.debug('"{0}" is a directory. Skipping conversion.'.format(item))
+    def queue_file(self, source_dir, dest_dir, source_file):
+
+        file_extension = source_file.suffix.lstrip('.').lower()
+        if file_extension in self._options['extensions_to_ignore'] or file_extension not in self._options['extensions_to_convert']:
             return
-
-        # Create full file path for input and output
-        base_filename = Path(item).stem
-        input_extension = Path(item).suffix
-        input_file = Path(input_path, item)
-        output_file = Path(output_path, item)
-
-        # Skip ignored extensions completely
-        if len(self._options['extensions_to_ignore']) > 0 and \
-                (input_extension.lstrip('.').lower() in self._options['extensions_to_ignore']):
-            return
-
-        # Adjust output file extension if it is going to be converted
-        if input_extension.lstrip('.').lower() in self._options['extensions_to_convert']:
-            output_filename = base_filename + '.' + self._options['extension']
-            output_file = Path(output_path, output_filename)
-
-        self._converter.queue_job(input_file, output_file)
+        
+        rel_dir = source_file.relative_to(source_dir).parent
+        filename_without_extension = source_file.stem
+        destination_file = Path(dest_dir, rel_dir, f"{filename_without_extension}.{self._options['format']}")
+        self._converter.queue_job(source_file, destination_file)
 
     ''' Wrapper function to call converter's process queue function'''
     def process_queue(self):
