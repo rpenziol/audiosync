@@ -144,7 +144,7 @@ class Converter(object):
 
 
 '''Converts files using the command line and ffmpeg. Called in a pool as a multiprocess, meaning multiple copies
-of these function may run concurrently. Due to constraints of the multiprocessing pool, this function is only 
+of these function may run concurrently. Due to constraints of the multiprocessing pool, this function is only
 allowed one input variable.'''
 
 
