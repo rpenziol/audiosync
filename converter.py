@@ -29,56 +29,52 @@ class Converter(object):
 
     def process_queue(self):
         for file in self._files:
-            fqfn_input = file['input_file']
-            fqfn_output = file['output_file']
-            input_extension = fqfn_input.suffix
-            fqfn_input_md5 = 0
-            fqfn_input_mtime = fqfn_input.stat().st_mtime
-            fqfn_input_size = fqfn_input.stat().st_size
+            input_path = file['input_file']
+            output_path = file['output_file']
+            input_path_md5 = 0
+            input_path_mtime = input_path.stat().st_mtime
+            input_path_size = input_path.stat().st_size
             match = False
             output_exists = False
 
             # Process file matches either on date modified & size, or by hash
             if self._options['match_method'] == 'date_size':
                 # Check if input file matches in database
-                if self._db.get_property(fqfn_input, 'mtime') == fqfn_input_mtime \
-                        and self._db.get_property(fqfn_input, 'size') == fqfn_input_size:
+                if self._db.get_property(input_path, 'mtime') == input_path_mtime \
+                        and self._db.get_property(input_path, 'size') == input_path_size:
                     match = True
             elif self._options['match_method'] == 'hash':
-                fqfn_input_md5 = hashlib.md5(open(fqfn_input, 'rb').read()).hexdigest()
-                if self._db.get_hash(fqfn_input) == fqfn_input_md5:
+                input_path_md5 = hashlib.md5(open(input_path, 'rb').read()).hexdigest()
+                if self._db.get_hash(input_path) == input_path_md5:
                     match = True
 
-            if fqfn_output.is_file():
+            if output_path.is_file():
                 output_exists = True
-                if Path(fqfn_output).stat().st_size == 0:
+                if output_path.stat().st_size == 0:  # Empty dest file exists
                     match = False
 
             if match and output_exists:
-                log.debug('Output file "{0}" up-to-date. Skipping.'.format(fqfn_output))
+                log.debug(f'Output file "{output_path}" up-to-date. Skipping.')
                 continue
 
             if match and not output_exists:
-                log.debug('Output file "{0}" has been removed. Reprocessing.'.format(fqfn_output))
+                log.debug(f'Output file "{output_path}" has been removed. Reprocessing.')
 
             if not match and output_exists:
-                log.debug('Output file "{0}" has changed. Deleting and reprocessing.'.format(fqfn_output))
-                fqfn_output.unlink()
-                self._db.update(fqfn_input, fqfn_input_md5, fqfn_input_mtime, fqfn_input_size)
+                log.debug(f'Output file "{output_path}" has changed. Deleting and reprocessing.')
+                output_path.unlink()
+                self._db.update(input_path, input_path_md5, input_path_mtime, input_path_size)
 
             if not match and not output_exists:
-                log.debug('Input file "{0}" is new. Adding to processing list.'.format(fqfn_input))
-                self._db.update(fqfn_input, fqfn_input_md5, fqfn_input_mtime, fqfn_input_size)
+                log.debug(f'Input file "{input_path}" is new. Adding to processing list.')
+                self._db.update(input_path, input_path_md5, input_path_mtime, input_path_size)
 
             # Simply copy non-audio files
+            input_extension = input_path.suffix
             if input_extension.lstrip('.').lower() not in self._options['extensions_to_convert']:
-                try:
-                    log.info('Copying "{0}" to "{1}"'.format(fqfn_input, fqfn_output))
-                    shutil.copy2(fqfn_input, fqfn_output)
-                    continue  # No need to add to convert queue
-                except Exception as e:
-                    print(e)
-                    log.warning('Unable to copy file: "{0}".'.format(fqfn_output))
+                log.info(f'Copying "{input_path}" to "{output_path}"')
+                shutil.copy2(input_path, output_path)
+                continue  # No need to add to convert queue
 
             self._jobs.append(file)
 
@@ -148,22 +144,22 @@ allowed one input variable.'''
 
 
 def convert(job):
-    fqfn_input = str(job['input_file'])
-    fqfn_output = str(job['output_file'])
+    input_path = str(job['input_file'])
+    output_path = str(job['output_file'])
     ffmpeg_path = job['ffmpeg_path']
     custom_command = job['custom_command']
     ffmpeg_args = job['ffmpeg_args']
 
-    log.info('Converting file "{0}" to "{1}"'.format(fqfn_input, fqfn_output))
+    log.info(f'Converting file "{input_path}" to "{output_path}"')
 
-    if custom_command != '':
+    if custom_command:
         command_list = custom_command.split()
-        command_list[command_list.index('[INPUT]')] = fqfn_input
-        command_list[command_list.index('[OUTPUT]')] = fqfn_output
+        command_list[command_list.index('[INPUT]')] = input_path
+        command_list[command_list.index('[OUTPUT]')] = output_path
     else:
-        command_list = [ffmpeg_path, '-i', fqfn_input]
+        command_list = [ffmpeg_path, '-i', input_path]
         command_list.extend(ffmpeg_args)
-        command_list.append(fqfn_output)
+        command_list.append(output_path)
 
     fnull = open(os.devnull, 'w')  # Redirect FFMPEG output to /dev/null
     subprocess.call(command_list, stdout=fnull, stderr=fnull, shell=False)

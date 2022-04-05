@@ -18,10 +18,10 @@ class Database(object):
         db_dir = Path(current_path, 'db')
 
         if not db_dir.exists():
-            log.info("Directory '{0}' does't exist. Creating directory".format(db_dir))
+            log.info(f"Directory '{db_dir}' does't exist. Creating directory")
             db_dir.mkdir(parents=True)
         else:
-            log.debug("Directory '{0}' already exist. Skipping directory creation.".format(db_dir))
+            log.debug(f"Directory '{db_dir}' already exist. Skipping directory creation.")
 
         db_full_path = Path(db_dir, db_name)
         return TinyDB(db_full_path)
