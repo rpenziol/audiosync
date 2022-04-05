@@ -1,9 +1,11 @@
-import os
-import subprocess
-import logging
-import shutil
-import hashlib
 from multiprocessing import Pool
+from pathlib import Path
+import hashlib
+import logging
+import os
+import shutil
+import subprocess
+
 log = logging.getLogger(__name__)
 
 
@@ -29,10 +31,10 @@ class Converter(object):
         for file in self._files:
             fqfn_input = file['input_file']
             fqfn_output = file['output_file']
-            fqfn_input_base, input_extension = os.path.splitext(fqfn_input)
+            input_extension = Path(fqfn_input).suffix
             fqfn_input_md5 = 0
-            fqfn_input_mtime = os.path.getmtime(fqfn_input)
-            fqfn_input_size = os.path.getsize(fqfn_input)
+            fqfn_input_mtime = Path(fqfn_input).stat().st_mtime
+            fqfn_input_size = Path(fqfn_input).stat().st_size
             match = False
             output_exists = False
 
@@ -50,9 +52,9 @@ class Converter(object):
                 log.fatal('No match method set.')
                 exit(1)
 
-            if os.path.isfile(fqfn_output):
+            if Path(fqfn_output).is_file():
                 output_exists = True
-                if os.path.getsize(fqfn_output) == 0:
+                if Path(fqfn_output).stat().st_size == 0:
                     match = False
 
             if match and output_exists:
@@ -63,8 +65,8 @@ class Converter(object):
                 log.debug('Output file "{0}" has been removed. Reprocessing.'.format(fqfn_output))
 
             if not match and output_exists:
-                log.debug('Output file "{0}" is outdated. Deleting and reprocessing.'.format(fqfn_output))
-                os.remove(fqfn_output)
+                log.debug('Output file "{0}" has changed. Deleting and reprocessing.'.format(fqfn_output))
+                Path(fqfn_output).unlink()
                 self._db.update(fqfn_input, fqfn_input_md5, fqfn_input_mtime, fqfn_input_size)
 
             if not match and not output_exists:

@@ -1,7 +1,8 @@
-import multiprocessing
+from pathlib import Path
 import logging
+import multiprocessing
 import yaml
-from os.path import expanduser
+
 log = logging.getLogger(__name__)
 
 
@@ -74,9 +75,9 @@ def options():
 
 def input_dir():
     with open('config.yaml', 'r') as f:
-        return expanduser(yaml.load(f, yaml.SafeLoader)['path']['input'])
+        return Path(yaml.load(f, yaml.SafeLoader)['path']['input']).expanduser()
 
 
 def output_dir():
     with open('config.yaml', 'r') as f:
-        return expanduser(yaml.load(f, yaml.SafeLoader)['path']['output'])
+        return Path(yaml.load(f, yaml.SafeLoader)['path']['output']).expanduser()

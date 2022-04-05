@@ -1,9 +1,10 @@
-import sys
-import os
-import shutil
+from pathlib import Path
 import logging
-import scanner
 import option_parser
+import scanner
+import shutil
+import sys
+
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
 
@@ -18,10 +19,10 @@ def main():
         log.info('Purging all files in directory: "{0}".'.format(output_dir))
 
         # Delete all folder contents without deleting output_dir folder
-        for item in os.listdir(output_dir):
-            full_path = os.path.join(output_dir, item)
-            if os.path.isfile(full_path):
-                os.unlink(full_path)
+        for item in Path(output_dir).iterdir():
+            full_path = Path(output_dir, item)
+            if full_path.is_file():
+                full_path.unlink()
             else:
                 shutil.rmtree(full_path)
 

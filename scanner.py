@@ -1,8 +1,10 @@
-import os
+from pathlib import Path
 import converter
-import shutil
 import database
 import logging
+import os
+import shutil
+
 log = logging.getLogger(__name__)
 
 
@@ -15,16 +17,16 @@ class Scanner(object):
     ''' Recursively scans input directory structure and compares to the destination folder tree.
     Creates missing directories in destination folder, calls dir_scanner to queue conversions, then processes queue '''
     def tree_scanner(self, source_dir, dest_dir):
-        for root, dirs, files_junk in os.walk(source_dir, topdown=True):
+        for root, dirs, _ in os.walk(source_dir, topdown=True):
             for directory in dirs:
-                rel_root = root.replace(source_dir, '')
-                rel_path = os.path.join(rel_root, directory)
-                input_path = os.path.join(source_dir, rel_path)
-                output_path = os.path.join(dest_dir, rel_path)
+                rel_root = root.replace(str(source_dir), '').lstrip('/')
+                rel_path = Path(rel_root, directory)
+                input_path = Path(source_dir, rel_path)
+                output_path = Path(dest_dir, rel_path)
 
-                if not os.path.exists(output_path):
+                if not output_path.exists():
                     log.info('Directory "{0}" does not exist. Creating directory'.format(output_path))
-                    os.makedirs(output_path)
+                    output_path.mkdir(parents=True)
                 else:
                     log.debug('Directory "{0}" already exist. Skipping directory creation.'.format(output_path))
 
@@ -39,17 +41,16 @@ class Scanner(object):
             self.remove_orphan_dirs(input_path, output_path)
             self.remove_orphan_files(input_path, output_path)
 
-            for item in os.listdir(input_path):
+            for item in input_path.iterdir():
                 self.queue_file(input_path, output_path, item)
 
     ''' Remove folder trees from output_path if folder isn't in input_path'''
     @staticmethod
     def remove_orphan_dirs(input_path, output_path):
-        for item in os.listdir(output_path):
-            if not os.path.isfile(os.path.join(output_path, item)):
-                if not os.path.exists(os.path.join(input_path, item)):
-                    log.debug('"{0}" is an orphaned directory. Removing from "{1}".'.format(item, output_path))
-                    shutil.rmtree(os.path.join(output_path, item))
+        for item in output_path.iterdir():
+            if Path(output_path, item).is_dir() and not Path(input_path, item).exists():
+                log.debug('"{0}" is an orphaned directory. Removing from "{1}".'.format(item, output_path))
+                shutil.rmtree(Path(output_path, item))
 
     ''' Remove files from output_path if file isn't in input_path'''
     @staticmethod
@@ -57,29 +58,30 @@ class Scanner(object):
         input_files = []
 
         # Collect list of file names from input_path
-        for item in os.listdir(input_path):
-            if os.path.isfile(os.path.join(input_path, item)):
-                base_name, _ = os.path.splitext(item)
+        for item in input_path.iterdir():
+            if Path(input_path, item).is_file():
+                base_name = Path(item).stem
                 input_files.append(base_name)
 
         # Remove orphaned files from output_path
-        for item in os.listdir(output_path):
-            if os.path.isfile(os.path.join(output_path, item)):
-                base_name, _ = os.path.splitext(item)
+        for item in output_path.iterdir():
+            if Path(output_path, item).is_file():
+                base_name = Path(item).stem
                 if base_name not in input_files:
                     log.debug('"{0}" is an orphaned file. Removing from "{1}".'.format(item, output_path))
-                    os.remove(os.path.join(output_path, item))
+                    Path(output_path, item).unlink()
 
     ''' Add file to process queue if it meets conversion criteria '''
     def queue_file(self, input_path, output_path, item):
-        if not os.path.isfile(os.path.join(input_path, item)):
+        if not Path(input_path, item).is_file():
             log.debug('"{0}" is a directory. Skipping conversion.'.format(item))
             return
 
         # Create full file path for input and output
-        base_filename, input_extension = os.path.splitext(item)
-        input_file = os.path.join(input_path, item)
-        output_file = os.path.join(output_path, item)
+        base_filename = Path(item).stem
+        input_extension = Path(item).suffix
+        input_file = Path(input_path, item)
+        output_file = Path(output_path, item)
 
         # Skip ignored extensions completely
         if len(self._options['extensions_to_ignore']) > 0 and \
@@ -89,7 +91,7 @@ class Scanner(object):
         # Adjust output file extension if it is going to be converted
         if input_extension.lstrip('.').lower() in self._options['extensions_to_convert']:
             output_filename = base_filename + '.' + self._options['extension']
-            output_file = os.path.join(output_path, output_filename)
+            output_file = Path(output_path, output_filename)
 
         self._converter.queue_job(input_file, output_file)
 
