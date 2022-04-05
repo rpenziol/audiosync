@@ -16,33 +16,31 @@ class Scanner(object):
 
     ''' Recursively scans input directory structure and compares to the destination folder tree.
     Creates missing directories in destination folder, calls dir_scanner to queue conversions, then processes queue '''
-    def tree_scanner(self, source_dir, dest_dir):
-        for root, dirs, _ in os.walk(source_dir, topdown=True):
-            for directory in dirs:
-                rel_root = root.replace(str(source_dir), '').lstrip('/')
-                rel_path = Path(rel_root, directory)
-                input_path = Path(source_dir, rel_path)
-                output_path = Path(dest_dir, rel_path)
+    def tree_scanner(self, source_dir: Path, dest_dir: Path):
+        for path in source_dir.rglob('*'):
+            rel_path = path.relative_to(source_dir)
+            output_path = Path(dest_dir, rel_path)
 
-                if not output_path.exists():
-                    log.info('Directory "{0}" does not exist. Creating directory'.format(output_path))
-                    output_path.mkdir(parents=True)
-                else:
-                    log.debug('Directory "{0}" already exist. Skipping directory creation.'.format(output_path))
+            if path.is_dir() and not output_path.exists():
+                log.info('Directory "{0}" does not exist. Creating directory'.format(output_path))
+                output_path.mkdir(parents=True)
+            elif path.is_dir():
+                log.debug('Directory "{0}" already exist. Skipping directory creation.'.format(output_path))
 
-                self.dir_scanner(input_path, output_path)
+            if path.is_dir():
+                self.dir_scanner(path, output_path)
         # Make the magic happen
         self._converter.process_queue()
 
     ''' Compares files between input and output paths.
     Depending on file type, copy or convert file from input_path to output_path '''
     def dir_scanner(self, input_path, output_path):
-            # Remove orphaned files and folder trees from output_path
-            self.remove_orphan_dirs(input_path, output_path)
-            self.remove_orphan_files(input_path, output_path)
+        # Remove orphaned files and folder trees from output_path
+        self.remove_orphan_dirs(input_path, output_path)
+        self.remove_orphan_files(input_path, output_path)
 
-            for item in input_path.iterdir():
-                self.queue_file(input_path, output_path, item)
+        for item in input_path.iterdir():
+            self.queue_file(input_path, output_path, item)
 
     ''' Remove folder trees from output_path if folder isn't in input_path'''
     @staticmethod
