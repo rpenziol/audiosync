@@ -24,7 +24,9 @@ def main():
             else:
                 shutil.rmtree(path)
 
-    scanner.Scanner(options)
+    scan = scanner.Scanner(options)
+    scan.remove_orphans()
+    scan.sync_to_dest()
     log.info('DONE SYNCING DIRECTORIES. EXITING.')
 
 
