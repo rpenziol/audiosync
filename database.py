@@ -29,10 +29,12 @@ class Database(object):
     ''' Take key/value pair and store/update value in database '''
     def update(self, path, hash, mtime, size):
         file = Query()
+        data = {'path': str(path), 'hash': hash, 'mtime': mtime, 'size': size}
+
         if self._db.count(file.path == path) >= 1:
-            self._db.update({'path': str(path), 'hash': hash, 'mtime': mtime, 'size': size}, file.path == path)
+            self._db.update(data, file.path == path)
         else:
-            self._db.insert({'path': str(path), 'hash': hash, 'mtime': mtime, 'size': size})
+            self._db.insert(data)
 
     ''' Lookup key in database, return value '''
     def get_property(self, path, prop):
