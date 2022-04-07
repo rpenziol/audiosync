@@ -1,4 +1,6 @@
 from pathlib import Path
+import converter
+import database
 import logging
 import option_parser
 import scanner
@@ -24,9 +26,12 @@ def main():
             else:
                 shutil.rmtree(path)
 
+    db = database.Database(options['input_dir'])
     scan = scanner.Scanner(options)
+    convert = converter.Converter(db, options)
     scan.remove_orphans()
-    scan.sync_to_dest()
+    iterator = scan.sync_to_dest()
+    convert.process_queue(iterator)
     log.info('DONE SYNCING DIRECTORIES. EXITING.')
 
 

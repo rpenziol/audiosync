@@ -11,24 +11,14 @@ log = logging.getLogger(__name__)
 
 class Converter(object):
     def __init__(self, db, options):
-        self._files = []
         self._jobs = []
         self._db = db
         self._options = options
         self._ffmpeg_args = self.ffmpeg_arg_generator()
 
-    def queue_job(self, input_file: Path, output_file: Path):
-        file = {
-            'input_file': input_file,
-            'output_file': output_file,
-            'ffmpeg_path': self._options['ffmpeg_path'],
-            'ffmpeg_args': self._ffmpeg_args,
-            'custom_command': self._options['custom_command']
-        }
-        self._files.append(file)
-
-    def process_queue(self):
-        for file in self._files:
+    def process_queue(self, files):
+        for file in files:
+            file['ffmpeg_args'] = self._ffmpeg_args
             input_path = file['input_file']
             output_path = file['output_file']
             input_path_md5 = 0
@@ -150,7 +140,7 @@ def convert(job):
     custom_command = job['custom_command']
     ffmpeg_args = job['ffmpeg_args']
 
-    log.info(f'Converting file "{input_path}" to "{output_path}"')
+    log.info('Converting file "{0}" to "{1}"'.format(input_path, output_path))
 
     if custom_command:
         command_list = custom_command.split()

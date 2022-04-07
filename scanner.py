@@ -10,7 +10,6 @@ log = logging.getLogger(__name__)
 class Scanner(object):
     def __init__(self, options):
         self._options = options
-        self._converter = converter.Converter(database.Database(self._options['input_dir']), options)
 
     ''' Recursively scans input directory structure and compares to the destination folder tree.
     Creates missing directories in destination folder, calls dir_scanner to queue conversions, then processes queue '''
@@ -67,7 +66,13 @@ class Scanner(object):
             filename_without_extension = source_file.stem
             destination_filename = f"{filename_without_extension}.{self._options['format']}"
             destination_file_path = Path(dest_dir, common_path, destination_filename)
-            self._converter.queue_job(source_file, destination_file_path)
+            file_to_process = {
+                'input_file': source_file,
+                'output_file': destination_file_path,
+                'ffmpeg_path': self._options['ffmpeg_path'],
+                'custom_command': self._options['custom_command']
+            }
+            return file_to_process
 
         for path in source_dir.rglob('*'):
             common_path = path.relative_to(source_dir)
@@ -79,7 +84,4 @@ class Scanner(object):
             elif path.is_dir():
                 log.debug(f'Directory "{output_path}" already exist. Skipping directory creation.')
             else:
-                _queue_file(source_dir, dest_dir, path)
-
-        # Make the magic happen
-        self._converter.process_queue()
+                yield _queue_file(source_dir, dest_dir, path)
