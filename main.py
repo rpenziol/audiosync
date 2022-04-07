@@ -12,8 +12,7 @@ log = logging.getLogger(__name__)
 def main():
     log.info('WELCOME TO AUDIOSYNC')
     options = option_parser.options()
-    input_dir = option_parser.input_dir()
-    output_dir = option_parser.output_dir()
+    output_dir = options['output_dir']
 
     if '--purge' in sys.argv:
         log.info(f'Purging all files in directory: "{output_dir}"')
@@ -25,7 +24,7 @@ def main():
             else:
                 shutil.rmtree(path)
 
-    scanner.Scanner(input_dir, output_dir, options)
+    scanner.Scanner(options)
     log.info('DONE SYNCING DIRECTORIES. EXITING.')
 
 

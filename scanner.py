@@ -9,25 +9,28 @@ log = logging.getLogger(__name__)
 
 
 class Scanner(object):
-    def __init__(self, source_dir, dest_dir, options):
-        self._converter = converter.Converter(database.Database(source_dir), options)
+    def __init__(self, options):
         self._options = options
-        self.tree_scanner(source_dir, dest_dir)
+        self._converter = converter.Converter(database.Database(self._options['input_dir']), options)
+        self.tree_scanner(self._options['input_dir'], self._options['output_dir'])
 
     ''' Recursively scans input directory structure and compares to the destination folder tree.
     Creates missing directories in destination folder, calls dir_scanner to queue conversions, then processes queue '''
     def tree_scanner(self, source_dir: Path, dest_dir: Path):
 
         def _remove_orphans(source_dir: Path, dest_dir: Path):
-            common_path = path.relative_to(dest_dir)
-            source_path = Path(source_dir, common_path)
 
             def _is_orphaned_dir(path: Path):
+                common_path = path.relative_to(dest_dir)
+                source_path = Path(source_dir, common_path)
                 return path.is_dir() and not source_path.exists()
 
             def _is_orphaned_file(path: Path):
                 if path.is_dir():
                     return False
+
+                common_path = path.relative_to(dest_dir)
+                source_path = Path(source_dir, common_path)
 
                 source_file_dir = source_path.parent
                 dest_filename_without_extension = common_path.stem
@@ -42,11 +45,11 @@ class Scanner(object):
 
             for path in dest_dir.rglob('*'):
                 if _is_orphaned_dir(path):
-                    log.debug(f'"{path}" is an orphaned directory. Removing.')
+                    log.info(f'"{path}" is an orphaned directory. Removing.')
                     shutil.rmtree(path)
 
                 if _is_orphaned_file(path):
-                    log.debug(f'"{path}" is an orphaned file. Removing.')
+                    log.info(f'"{path}" is an orphaned file. Removing.')
                     path.unlink()
 
         def _sync_to_dest(source_dir: Path, dest_dir: Path):

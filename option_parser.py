@@ -69,15 +69,7 @@ def options():
         'match_method': config['advance']['match_method'],
         'extensions_to_ignore': extensions_to_ignore,
         'extension': extension,
-        'custom_command': custom_command
+        'custom_command': custom_command,
+        'input_dir': Path(config['path']['input']).expanduser(),
+        'output_dir': Path(config['path']['output']).expanduser()
     }
-
-
-def input_dir():
-    with open('config.yaml', 'r') as f:
-        return Path(yaml.load(f, yaml.SafeLoader)['path']['input']).expanduser()
-
-
-def output_dir():
-    with open('config.yaml', 'r') as f:
-        return Path(yaml.load(f, yaml.SafeLoader)['path']['output']).expanduser()
