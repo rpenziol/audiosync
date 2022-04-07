@@ -1,3 +1,4 @@
+from collections import namedtuple
 from pathlib import Path
 import logging
 import multiprocessing
@@ -5,6 +6,23 @@ import yaml
 
 log = logging.getLogger(__name__)
 
+Options = namedtuple('Options',
+    [
+        'bitrate',
+        'bitrate_type',
+        'custom_command',
+        'extension',
+        'extensions_to_convert',
+        'extensions_to_ignore',
+        'ffmpeg_path',
+        'format',
+        'input_dir',
+        'match_method',
+        'output_dir',
+        'sample_rate',
+        'thread_count'
+    ]
+)
 
 def options():
     with open('config.yaml', 'r') as f:
@@ -58,18 +76,18 @@ def options():
             log.fatal('Custom command does not contain [INPUT] or [OUTPUT] string argument.')
             exit(1)
 
-    return {
-        'format': config['audio']['output_format'],
-        'bitrate': config['audio']['bitrate'],
-        'bitrate_type': config['audio']['bitrate_type'],
-        'sample_rate': sample_rate,
-        'extensions_to_convert': config['audio']['extensions_to_convert'].lower().replace(' ', '').split(','),
-        'ffmpeg_path': config['path']['ffmpeg'],
-        'thread_count': thread_count,
-        'match_method': config['advance']['match_method'],
-        'extensions_to_ignore': extensions_to_ignore,
-        'extension': extension,
-        'custom_command': custom_command,
-        'input_dir': Path(config['path']['input']).expanduser(),
-        'output_dir': Path(config['path']['output']).expanduser()
-    }
+    return Options(
+        bitrate_type=config['audio']['bitrate_type'],
+        bitrate=config['audio']['bitrate'],
+        custom_command=custom_command,
+        extension=extension,
+        extensions_to_convert=config['audio']['extensions_to_convert'].lower().replace(' ', '').split(','),
+        extensions_to_ignore=extensions_to_ignore,
+        ffmpeg_path=config['path']['ffmpeg'],
+        format=config['audio']['output_format'],
+        input_dir=Path(config['path']['input']).expanduser(),
+        match_method=config['advance']['match_method'],
+        output_dir=Path(config['path']['output']).expanduser(),
+        sample_rate=sample_rate,
+        thread_count=thread_count,
+    )

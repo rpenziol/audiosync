@@ -14,7 +14,7 @@ log = logging.getLogger(__name__)
 def main():
     log.info('WELCOME TO AUDIOSYNC')
     options = option_parser.options()
-    output_dir = options['output_dir']
+    output_dir = options.output_dir
 
     if '--purge' in sys.argv:
         log.info(f'Purging all files in directory: "{output_dir}"')
@@ -26,7 +26,7 @@ def main():
             else:
                 shutil.rmtree(path)
 
-    db = database.Database(options['input_dir'])
+    db = database.Database(options.input_dir)
     scan = scanner.Scanner(options)
     convert = converter.Converter(db, options)
     scan.remove_orphans()

@@ -1,5 +1,5 @@
 from multiprocessing import Pool
-from pathlib import Path
+from option_parser import Options
 import hashlib
 import logging
 import os
@@ -10,7 +10,7 @@ log = logging.getLogger(__name__)
 
 
 class Converter(object):
-    def __init__(self, db, options):
+    def __init__(self, db, options: Options):
         self._jobs = []
         self._db = db
         self._options = options
@@ -28,12 +28,12 @@ class Converter(object):
             output_exists = False
 
             # Process file matches either on date modified & size, or by hash
-            if self._options['match_method'] == 'date_size':
+            if self._options.match_method == 'date_size':
                 # Check if input file matches in database
                 if self._db.get_property(input_path, 'mtime') == input_path_mtime \
                         and self._db.get_property(input_path, 'size') == input_path_size:
                     match = True
-            elif self._options['match_method'] == 'hash':
+            elif self._options.match_method == 'hash':
                 input_path_md5 = hashlib.md5(open(input_path, 'rb').read()).hexdigest()
                 if self._db.get_hash(input_path) == input_path_md5:
                     match = True
@@ -61,14 +61,14 @@ class Converter(object):
 
             # Simply copy non-audio files
             input_extension = input_path.suffix
-            if input_extension.lstrip('.').lower() not in self._options['extensions_to_convert']:
+            if input_extension.lstrip('.').lower() not in self._options.extensions_to_convert:
                 log.info(f'Copying "{input_path}" to "{output_path}"')
                 shutil.copy2(input_path, output_path)
                 continue  # No need to add to convert queue
 
             self._jobs.append(file)
 
-        pool = Pool(processes=self._options['thread_count'])
+        pool = Pool(processes=self._options.thread_count)
         pool.map(convert, self._jobs)
         pool.close()
         pool.join()
@@ -77,16 +77,16 @@ class Converter(object):
     command-line arguments based on the given codec / bitrate configuration'''
     def ffmpeg_arg_generator(self):
         ffmpeg_args = ['-vf', 'scale=-2:500']  # Scale album art to height of 500px
-        if self._options['sample_rate']:
-            ffmpeg_args.extend(['-ar', str(self._options['sample_rate'])])
+        if self._options.sample_rate:
+            ffmpeg_args.extend(['-ar', str(self._options.sample_rate)])
 
-        bitrate = int(self._options['bitrate'])
+        bitrate = int(self._options.bitrate)
 
-        if self._options['format'] == 'mp3':
-            if self._options['bitrate_type'] == 'cbr':
-                ffmpeg_args.extend(['-b:a', str(self._options['bitrate']) + 'k'])
+        if self._options.format == 'mp3':
+            if self._options.bitrate_type == 'cbr':
+                ffmpeg_args.extend(['-b:a', str(self._options.bitrate) + 'k'])
 
-            if self._options['bitrate_type'] == 'vbr':
+            if self._options.bitrate_type == 'vbr':
                 if bitrate >= 250:
                     quality = '0'
                 elif bitrate in range(210, 250):
@@ -109,12 +109,12 @@ class Converter(object):
                     quality = '9'
                 ffmpeg_args.extend(['-q:a', quality])
 
-        elif self._options['format'] == 'aac':
+        elif self._options.format == 'aac':
             ffmpeg_args.extend(['-c:a', 'aac'])
-            if self._options['bitrate_type'] == 'cbr':
-                ffmpeg_args.extend(['-b:a', self._options['bitrate'] + 'k'])
+            if self._options.bitrate_type == 'cbr':
+                ffmpeg_args.extend(['-b:a', self._options.bitrate + 'k'])
 
-            if self._options['bitrate_type'] == 'vbr':
+            if self._options.bitrate_type == 'vbr':
                 if bitrate >= 250:
                     quality = '2'
                 elif bitrate in range(70, 250):
