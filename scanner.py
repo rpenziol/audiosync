@@ -26,7 +26,7 @@ class Scanner(object):
                 return path.is_dir() and not source_path.exists()
 
             def _is_orphaned_file(path: Path):
-                if path.is_dir():
+                if path.is_dir() and path.exists():
                     return False
 
                 common_path = path.relative_to(dest_dir)
@@ -48,7 +48,7 @@ class Scanner(object):
                     log.info(f'"{path}" is an orphaned directory. Removing.')
                     shutil.rmtree(path)
 
-                if _is_orphaned_file(path):
+                elif _is_orphaned_file(path):
                     log.info(f'"{path}" is an orphaned file. Removing.')
                     path.unlink()
 
