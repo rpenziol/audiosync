@@ -59,7 +59,7 @@ class Scanner(object):
         def _queue_file(source_dir, dest_dir, source_file):
             file_extension = source_file.suffix.lstrip('.').lower()
             if file_extension in self._options.extensions_to_ignore or file_extension not in self._options.extensions_to_convert:
-                return
+                return False
 
             common_path = source_file.relative_to(source_dir).parent
             filename_without_extension = source_file.stem
@@ -83,4 +83,6 @@ class Scanner(object):
             elif path.is_dir():
                 log.debug(f'Directory "{output_path}" already exist. Skipping directory creation.')
             else:
-                yield _queue_file(source_dir, dest_dir, path)
+                file_to_process = _queue_file(source_dir, dest_dir, path)
+                if file_to_process:
+                    yield file_to_process
