@@ -31,8 +31,8 @@ class Database(object):
         file = Query()
         data = {'path': str(path), 'hash': hash, 'mtime': mtime, 'size': size}
 
-        if self._db.count(file.path == path) >= 1:
-            self._db.update(data, file.path == path)
+        if self._db.count(file.path == str(path)) >= 1:
+            self._db.update(data, file.path == str(path))
         else:
             self._db.insert(data)
 
@@ -40,6 +40,6 @@ class Database(object):
     def get_property(self, path, prop):
         file_property = ''
         file = Query()
-        if self._db.count(file.path == path) >= 1:
-            file_property = self._db.search(file.path == path)[0][prop]
+        if self._db.count(file.path == str(path)) >= 1:
+            file_property = self._db.search(file.path == str(path))[0][prop]
         return file_property
