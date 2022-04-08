@@ -7,7 +7,11 @@ import scanner
 import shutil
 import sys
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(
+    format= '[%(asctime)s] {%(filename)s:%(lineno)d} %(levelname)s - %(message)s',
+    datefmt='%Y-%m-%d_%H:%M:%S',
+    level=logging.INFO
+)
 log = logging.getLogger(__name__)
 
 
