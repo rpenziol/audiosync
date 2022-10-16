@@ -1,8 +1,8 @@
 from collections import namedtuple
 from pathlib import Path
+import json
 import logging
 import multiprocessing
-import yaml
 
 log = logging.getLogger(__name__)
 
@@ -25,8 +25,8 @@ Options = namedtuple('Options',
 )
 
 def options():
-    with open('config.yaml', 'r') as f:
-        config = yaml.load(f, yaml.SafeLoader)
+    with open('config.json', 'r') as f:
+        config = json.load(f)
 
     # Set output extension based on codec used
     extension = config['audio']['output_format']
