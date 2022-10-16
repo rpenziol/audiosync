@@ -61,7 +61,7 @@ class Converter(object):
 
             # Simply copy non-audio files
             input_extension = input_path.suffix
-            if input_extension.lstrip('.').lower() not in self._options.extensions_to_convert:
+            if input_extension.lstrip('.').lower() not in self._options.convert_extensions:
                 log.info(f'Copying "{input_path}" to "{output_path}"')
                 shutil.copy2(input_path, output_path)
                 continue  # No need to add to convert queue
@@ -77,14 +77,14 @@ class Converter(object):
     command-line arguments based on the given codec / bitrate configuration'''
     def ffmpeg_arg_generator(self):
         ffmpeg_args = ['-vf', 'scale=-2:500']  # Scale album art to height of 500px
-        if self._options.sample_rate:
-            ffmpeg_args.extend(['-ar', str(self._options.sample_rate)])
+        if self._options.output_sample_rate:
+            ffmpeg_args.extend(['-ar', str(self._options.output_sample_rate)])
 
         bitrate = int(self._options.bitrate)
 
         if self._options.format == 'mp3':
             if self._options.bitrate_type == 'cbr':
-                ffmpeg_args.extend(['-b:a', str(self._options.bitrate) + 'k'])
+                ffmpeg_args.extend(['-b:a', f'{self._options.bitrate}k'])
 
             if self._options.bitrate_type == 'vbr':
                 if bitrate >= 250:
@@ -112,7 +112,7 @@ class Converter(object):
         elif self._options.format == 'aac':
             ffmpeg_args.extend(['-c:a', 'aac'])
             if self._options.bitrate_type == 'cbr':
-                ffmpeg_args.extend(['-b:a', self._options.bitrate + 'k'])
+                ffmpeg_args.extend(['-b:a', f'{self._options.bitrate}k'])
 
             if self._options.bitrate_type == 'vbr':
                 if bitrate >= 250:

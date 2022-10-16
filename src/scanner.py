@@ -12,7 +12,7 @@ class Scanner(object):
 
     ''' Recursively scans input directory structure and compares to the destination folder tree.
     Creates missing directories in destination folder, calls dir_scanner to queue conversions, then processes queue '''
-    def remove_orphans(self, source_dir: Path=None, dest_dir: Path=None):
+    def remove_orphans(self, source_dir: Path = None, dest_dir: Path = None):
         if not source_dir:
             source_dir = self._options.input_dir
         if not dest_dir:
@@ -36,7 +36,7 @@ class Scanner(object):
             for source_file in source_file_dir.glob(f'{dest_filename_without_extension}*'):
                 source_file_extension = source_file.suffix.lstrip('.').lower()
 
-                if source_file_extension in self._options.extensions_to_convert:
+                if source_file_extension in self._options.convert_extensions:
                     log.debug(f'Source file found "{source_file}".')
                     return False
             return True
@@ -50,15 +50,16 @@ class Scanner(object):
                 log.info(f'"{path}" is an orphaned file. Removing.')
                 path.unlink()
 
-    def sync_to_dest(self, source_dir: Path=None, dest_dir: Path=None):
+    def sync_to_dest(self, source_dir: Path = None, dest_dir: Path = None):
         if not source_dir:
             source_dir = self._options.input_dir
         if not dest_dir:
             dest_dir = self._options.output_dir
 
-        def _queue_file(source_dir, dest_dir, source_file):
+        def _queue_file(source_dir: Path, dest_dir: Path, source_file: Path):
             file_extension = source_file.suffix.lstrip('.').lower()
-            if file_extension in self._options.extensions_to_ignore or file_extension not in self._options.extensions_to_convert:
+            if file_extension in self._options.ignore_extensions or \
+               file_extension not in self._options.convert_extensions:
                 return False
 
             common_path = source_file.relative_to(source_dir).parent

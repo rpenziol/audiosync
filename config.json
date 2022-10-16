@@ -1,21 +1,21 @@
 {
   "path": {
+    "ffmpeg": "ffmpeg",
     "input": "/in/",
-    "output": "/out/",
-    "ffmpeg": "ffmpeg"
+    "output": "/out/"
   },
   "audio": {
-    "output_format": "mp3",
-    "bitrate": 320,
     "bitrate_type": "cbr",
-    "sample_rate": 44100,
-    "extensions_to_convert": "flac, wav"
+    "bitrate": 320,
+    "convert_extensions": "flac, wav",
+    "output_codec": "aac",
+    "output_sample_rate": null
   },
   "advance": {
-    "thread_count": "max",
+    "custom_command_enabled": false,
+    "custom_command": "ffmpeg -i [INPUT] -acodec alac [OUTPUT]",
+    "ignore_extensions": ["7z", "zip"],
     "match_method": "date_size",
-    "extensions_to_ignore": "7z, zip, ini, itc2, itl, itdb, m3u, jpg, jpeg, log, pdf, png, cue, sfk",
-    "enable_custom_command": false,
-    "custom_command": "ffmpeg -i [INPUT] -acodec alac [OUTPUT]"
+    "thread_count": "max"
   }
 }

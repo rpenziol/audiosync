@@ -8,7 +8,7 @@ import shutil
 import sys
 
 logging.basicConfig(
-    format= '[%(asctime)s] {%(filename)s:%(lineno)d} %(levelname)s - %(message)s',
+    format='[%(asctime)s] {%(filename)s:%(lineno)d} %(levelname)s - %(message)s',
     datefmt='%Y-%m-%d_%H:%M:%S',
     level=logging.INFO
 )
