@@ -2,7 +2,6 @@ from multiprocessing import Pool
 from option_parser import Options
 import hashlib
 import logging
-import os
 import shutil
 import subprocess
 
@@ -110,7 +109,7 @@ class Converter(object):
                 ffmpeg_args.extend(['-q:a', quality])
 
         elif self._options.codec == 'aac':
-            ffmpeg_args.extend(['-c:a', 'aac'])
+            ffmpeg_args.extend(['-c:a', 'aac', '-vn', '-frame_size', '1024'])  # https://stackoverflow.com/a/72655152
             if self._options.bitrate_type == 'cbr':
                 ffmpeg_args.extend(['-b:a', f'{self._options.bitrate}k'])
 
