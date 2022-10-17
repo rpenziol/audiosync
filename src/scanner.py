@@ -36,7 +36,8 @@ class Scanner(object):
             for source_file in source_file_dir.glob(f'{dest_filename_without_extension}*'):
                 source_file_extension = source_file.suffix.lstrip('.').lower()
 
-                if source_file_extension in self._options.convert_extensions:
+                if source_file_extension in self._options.convert_extensions and \
+                   path.suffix.lower().lstrip('.') == self._options.extension:
                     log.debug(f'Source file found "{source_file}".')
                     return False
             return True
@@ -64,7 +65,7 @@ class Scanner(object):
 
             common_path = source_file.relative_to(source_dir).parent
             filename_without_extension = source_file.stem
-            destination_filename = f"{filename_without_extension}.{self._options.format}"
+            destination_filename = f"{filename_without_extension}.{self._options.extension}"
             destination_file_path = Path(dest_dir, common_path, destination_filename)
             file_to_process = {
                 'input_file': source_file,

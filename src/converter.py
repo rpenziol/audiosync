@@ -82,7 +82,7 @@ class Converter(object):
 
         bitrate = int(self._options.bitrate)
 
-        if self._options.format == 'mp3':
+        if self._options.codec == 'mp3':
             if self._options.bitrate_type == 'cbr':
                 ffmpeg_args.extend(['-b:a', f'{self._options.bitrate}k'])
 
@@ -109,7 +109,7 @@ class Converter(object):
                     quality = '9'
                 ffmpeg_args.extend(['-q:a', quality])
 
-        elif self._options.format == 'aac':
+        elif self._options.codec == 'aac':
             ffmpeg_args.extend(['-c:a', 'aac'])
             if self._options.bitrate_type == 'cbr':
                 ffmpeg_args.extend(['-b:a', f'{self._options.bitrate}k'])
@@ -151,5 +151,4 @@ def convert(job):
         command_list.extend(ffmpeg_args)
         command_list.append(output_path)
 
-    fnull = open(os.devnull, 'w')  # Redirect FFMPEG output to /dev/null
-    subprocess.call(command_list, stdout=fnull, stderr=fnull, shell=False)
+    subprocess.run(command_list, capture_output=True)
