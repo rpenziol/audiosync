@@ -3,6 +3,7 @@ from pathlib import Path
 import json
 import logging
 import multiprocessing
+import os
 
 log = logging.getLogger(__name__)
 
@@ -25,7 +26,13 @@ Options = namedtuple('Options', [
 
 
 def options():
-    with open('config.json', 'r') as f:
+    config_path_env = os.environ.get('AUDIOSYNC_CONFIG_PATH')
+    if config_path_env:
+        config_path = Path(config_path_env)
+    else:
+        config_path = Path(Path(__file__).parent.parent, 'config.json')
+
+    with open(config_path, 'r') as f:
         config = json.load(f)
 
     # Set output extension based on codec used

@@ -1,21 +1,26 @@
+from option_parser import Options
 from pathlib import Path
 from tinydb import TinyDB, Query
 import hashlib
 import logging
+import os
 
 log = logging.getLogger(__name__)
 
 
 class Database(object):
-    def __init__(self, database_path):
-        self._db = self.load_database(database_path)
+    def __init__(self, options: Options):
+        self._db = self.load_database(options.input_dir)
 
     @staticmethod
     def load_database(database_path):
         # Use MD5 of source_path to establish database name
         db_name = hashlib.md5(str(database_path).encode('utf-8')).hexdigest() + '.json'
-        current_path = Path(__file__).parent
-        db_dir = Path(current_path, 'db')
+        db_dir_env = os.environ.get('AUDIOSYNC_DATABASE_DIR')
+        if db_dir_env:
+            db_dir = Path(db_dir_env)
+        else:
+            db_dir = Path(Path(__file__).parent.parent, 'db')
 
         if not db_dir.exists():
             log.info(f"Directory '{db_dir}' does't exist. Creating directory")

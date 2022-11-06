@@ -6,6 +6,7 @@ import option_parser
 import scanner
 import shutil
 import sys
+import time
 
 logging.basicConfig(
     format='[%(asctime)s] {%(filename)s:%(lineno)d} %(levelname)s - %(message)s',
@@ -30,7 +31,7 @@ def main():
             else:
                 shutil.rmtree(path)
 
-    db = database.Database(options.input_dir)
+    db = database.Database(options)
     scan = scanner.Scanner(options)
     convert = converter.Converter(db, options)
     scan.remove_orphans()
@@ -40,4 +41,6 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    while True:
+        main()
+        time.sleep(600)
