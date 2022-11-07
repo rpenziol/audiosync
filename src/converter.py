@@ -72,10 +72,10 @@ class Converter(object):
         pool.close()
         pool.join()
 
-    '''Using the globaloptions variable, this function will generate and return the proper ffmpeg
+    '''Using the given options, this function will generate and return the proper ffmpeg
     command-line arguments based on the given codec / bitrate configuration'''
     def ffmpeg_arg_generator(self):
-        ffmpeg_args = ['-vf', 'scale=-2:500']  # Scale album art to height of 500px
+        ffmpeg_args = ['-c:v', 'copy']  # Copy album art https://superuser.com/a/1552181
         if self._options.output_sample_rate:
             ffmpeg_args.extend(['-ar', str(self._options.output_sample_rate)])
 
@@ -122,7 +122,7 @@ class Converter(object):
                     quality = round(-0.638889 + 0.0105556 * bitrate, 2)
                 else:
                     quality = '0.1'
-                ffmpeg_args.extend(['-q:a ', quality])
+                ffmpeg_args.extend(['-q:a', quality])
 
         return ffmpeg_args
 
