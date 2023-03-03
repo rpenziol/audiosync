@@ -1,10 +1,9 @@
-FROM python:3.9-alpine
+FROM python:3.10-alpine
 
 COPY . /app
 WORKDIR /app
 
-RUN apk add --no-cache bash ffmpeg
-
+RUN apk add --no-cache ffmpeg
 RUN pip install -r requirements.txt
 
-CMD ["/bin/bash", "run.sh"]
+CMD ["python", "/app/src/main.py"]
