@@ -5,15 +5,15 @@
     "output": "/out/"
   },
   "audio": {
-    "bitrate_type": "cbr",
-    "bitrate": 320,
+    "bitrate_type": "vbr",
+    "bitrate": 256,
     "convert_extensions": "flac, wav",
-    "output_codec": "aac",
+    "output_codec": "mp3",
     "output_sample_rate": null
   },
   "advance": {
     "custom_command_enabled": false,
-    "custom_command": "ffmpeg -i [INPUT] -acodec alac [OUTPUT]",
+    "custom_command": "ffmpeg -i [INPUT] -acodec mp3 [OUTPUT]",
     "ignore_extensions": ["7z", "zip"],
     "match_method": "date_size",
     "thread_count": "max"
